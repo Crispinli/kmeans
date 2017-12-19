@@ -15,7 +15,6 @@ def euclDistance(vector1, vector2):
 def initCentroids(dataSet, k):
     '''
     用随机样本初始化质点
-
     :param dataSet: 训练数据
     :param k: 需要计算的分类数
     :return: 随机初始化的k个质点
@@ -34,7 +33,7 @@ def initCentroids(dataSet, k):
     return centroids
 
 
-def getcost(clusterAssment):
+def getCost(clusterAssment):
     '''
     获取cost
     :param clusterAssment: 用于存储聚类结果的矩阵
@@ -43,33 +42,36 @@ def getcost(clusterAssment):
     len = clusterAssment.shape[0]  # 获取聚类结果的行数，也就是样本的个数
     Sum = 0.0
     for i in range(len):
-        Sum = Sum + clusterAssment[i, 1]  # 叠加样本与质点的距离，得到 cost
+        Sum = Sum + clusterAssment[i, 1]  # 叠加样本与质点之间的距离，得到 cost
     return Sum
 
 
-def kmeans(dataSet, k):
+def kMeans(dataSet, k):
     '''
-    k-means主算法
+    k-means算法
     :param dataSet: 训练数据
     :param k: 类别个数
     :return: 质点和聚类结果
     '''
     numSamples = dataSet.shape[0]
-    clusterAssment = np.mat(np.zeros((numSamples, 2)))  # 第一列存这个样本点属于哪个簇，第二列存这个样本点和质点的距离
-    for i in range(numSamples):  # 初始化
+    clusterAssment = np.mat(np.zeros((numSamples, 2)))  # 第一列存这个样本点属于哪个簇，第二列存这个样本点与距离最近的质点之间的距离
+    for i in range(numSamples):  # 初始化聚类结果矩阵
         clusterAssment[i, 0] = -1
+
     clusterChanged = True
+
+    cost = []
 
     # step 1: 初始化 centroids 矩阵，随机获取k个质点
     centroids = initCentroids(dataSet, k)
 
-    while clusterChanged:  # 如果已经收敛，则 clusterChanged 的值为 False
+    while clusterChanged:  # 如果 kmeans 算法已经收敛，即质点不再变化，则 clusterChanged 的值为 False
         clusterChanged = False
         for i in range(numSamples):  # 对于每个样本点
             minDist = 100000.0  # 用于记录距离各个质点的最小距离
             minIndex = 0  # 用于记录质点标号
 
-            # step 2: 找到最近的质点
+            # step 2: 找到距离最近的质点
             for j in range(1, k + 1):  # 对于每个质点
                 distance = euclDistance(centroids[j, :], dataSet[i, :])
                 if distance < minDist:
@@ -77,16 +79,21 @@ def kmeans(dataSet, k):
                     minIndex = j
 
             # step 3: 更新样本点与质点的分配关系
-            if clusterAssment[i, 0] != minIndex:
+            if clusterAssment[i, 0] != minIndex:  # kmeans 算法尚未收敛
                 clusterChanged = True
                 clusterAssment[i, :] = minIndex, minDist
-            else:
+            else:  # 这个样本点的质点不变，只更新最短距离
                 clusterAssment[i, 1] = minDist
 
         # step 4: 更新质点
         for j in range(1, k + 1):
             pointsInCluster = dataSet[np.nonzero(clusterAssment[:, 0].A == j)[0]]
             centroids[j, :] = np.mean(pointsInCluster, axis=0)
+
+        # step 5: 获取 cost 并存储，用于可视化
+        cost.append(getCost(clusterAssment))
+
+    print("the times of iteration: ", len(cost))
 
     return centroids, clusterAssment
 
@@ -95,7 +102,7 @@ def showCluster(dataSet, k, centroids, clusterAssment):
     '''
     以2D形式可视化数据
     :param dataSet: 训练数据
-    :param k: 类别数
+    :param k: 类别个数
     :param centroids: 样本质点
     :param clusterAssment: 聚类结果
     :return: void
@@ -136,8 +143,8 @@ with open('./testSet.txt') as fileIn:
 print("step 2: clustering...")
 dataSet = np.mat(dataSet)
 print("dataSet: ", dataSet)
-k = 2
-centroids, clusterAssment = kmeans(dataSet, k)
+k = 4
+centroids, clusterAssment = kMeans(dataSet, k)
 
 # step 3: 显示结果
 print("step 3: show the result...")
