@@ -9,7 +9,7 @@ def euclDistance(vector1, vector2):
     :param vector2: 向量2
     :return: 两个向量之间的距离
     '''
-    return np.sum(np.power(vector2 - vector1, 2))
+    return np.sum(np.power(vector2 - vector1, 2))  # 对应分量求平方差后整体求和
 
 
 def initCentroids(dataSet, k):
@@ -20,9 +20,9 @@ def initCentroids(dataSet, k):
     :return: 随机初始化的k个质点
     '''
     numSamples, dim = dataSet.shape  # 将训练数据看作矩阵，求出行数和列数
-    centroids = np.zeros((k + 1, dim))  # 初始化一个 (k+1)*dim 的零矩阵
+    centroids = np.zeros((k, dim))  # 初始化一个 k*dim 的零矩阵
     s = set()  # python中的数据类型：集合
-    for i in range(1, k + 1):  # i 从 1 迭代到 k
+    for i in range(k):  # i 从 0 迭代到 k
         while True:
             index = int(np.random.uniform(0, numSamples))  # 将生成的随机数转换成整型
             if index not in s:  # 若集合 s 中不包含 index，则将其加入其中
@@ -35,14 +35,14 @@ def initCentroids(dataSet, k):
 
 def getCost(clusterAssment):
     '''
-    获取cost
+    获取cost，也就是误差平方和
     :param clusterAssment: 用于存储聚类结果的矩阵
     :return: cost
     '''
     len = clusterAssment.shape[0]  # 获取聚类结果的行数，也就是样本的个数
     Sum = 0.0
     for i in range(len):
-        Sum = Sum + clusterAssment[i, 1]  # 叠加样本与质点之间的距离，得到 cost
+        Sum = Sum + clusterAssment[i, 1]
     return Sum
 
 
@@ -68,11 +68,11 @@ def kMeans(dataSet, k):
     while clusterChanged:  # 如果 kmeans 算法已经收敛，即质点不再变化，则 clusterChanged 的值为 False
         clusterChanged = False
         for i in range(numSamples):  # 对于每个样本点
-            minDist = 100000.0  # 用于记录距离各个质点的最小距离
-            minIndex = 0  # 用于记录质点标号
+            minDist = 10 ** 100  # 用于记录距离各个质点的最小距离
+            minIndex = -1  # 用于记录质点标号
 
             # step 2: 找到距离最近的质点
-            for j in range(1, k + 1):  # 对于每个质点
+            for j in range(k):  # 对于每个质点
                 distance = euclDistance(centroids[j], dataSet[i])
                 if distance < minDist:
                     minDist = distance
@@ -86,7 +86,7 @@ def kMeans(dataSet, k):
                 clusterAssment[i, 1] = minDist
 
         # step 4: 更新质点
-        for j in range(1, k + 1):
+        for j in range(k):
             pointsInCluster = dataSet[np.nonzero(clusterAssment[:, 0].A == j)[0]]
             centroids[j, :] = np.mean(pointsInCluster, axis=0)
 
@@ -94,6 +94,7 @@ def kMeans(dataSet, k):
         cost.append(getCost(clusterAssment))
 
     print("\tthe times of iteration: ", len(cost))
+    print("\tcost: ", cost)
 
     return centroids, clusterAssment
 
@@ -132,19 +133,23 @@ def showCluster(dataSet, k, centroids, clusterAssment):
 
 # step 1: 载入数据
 print("step 1: load data...")
-dataSet = []
+dataSet = []  # 用于存储经过处理后的数据，用作训练 kmeans 算法
+allDataSet = []  # 用于存储所有原始数据，元素为类型
 with open('./wpbc.data.txt') as fileIn:
     for line in fileIn.readlines():
         line = line.strip().split(",")
-        line = list(map(lambda x:float(x), line[2:]))
+        allDataSet.append(line)
+        line = list(map(lambda x: float(x), line[2:]))  # 将 list 中字符串元素变为 float 类型
         dataSet.append(line)
+dataSet = np.mat(dataSet)  # 把 list 变换为 matrix
+print("dataSet: \n", dataSet, "\n")
 
 # step 2: 开始聚合...
 print("step 2: clustering...")
-dataSet = np.mat(dataSet)
-k = 2
+k = 2  # 类别个数
 centroids, clusterAssment = kMeans(dataSet, k)
 
 # step 3: 显示结果
-print("step 3: show the result...")
-showCluster(dataSet, k, centroids, clusterAssment)
+print("\nStep 3: show the outcome...")
+print("centroids: \n", centroids)
+print("\nclusterAssment: \n", clusterAssment)
