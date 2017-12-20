@@ -28,9 +28,9 @@ def initCentroids(dataSet, k):
             if index not in s:  # 若集合 s 中不包含 index，则将其加入其中
                 s.add(index)
                 break
-        print("random index: ", index)
+        print("\trandom index: ", index)
         centroids[i, :] = dataSet[index, :]  # 将 dataSet 的第 index 行赋值给 centroids 的第 i 行
-    return centroids
+    return np.mat(centroids)
 
 
 def getCost(clusterAssment):
@@ -73,7 +73,7 @@ def kMeans(dataSet, k):
 
             # step 2: 找到距离最近的质点
             for j in range(1, k + 1):  # 对于每个质点
-                distance = euclDistance(centroids[j, :], dataSet[i, :])
+                distance = euclDistance(centroids[j], dataSet[i])
                 if distance < minDist:
                     minDist = distance
                     minIndex = j
@@ -93,7 +93,7 @@ def kMeans(dataSet, k):
         # step 5: 获取 cost 并存储，用于可视化
         cost.append(getCost(clusterAssment))
 
-    print("the times of iteration: ", len(cost))
+    print("\tthe times of iteration: ", len(cost))
 
     return centroids, clusterAssment
 
@@ -109,12 +109,12 @@ def showCluster(dataSet, k, centroids, clusterAssment):
     '''
     numSamples, dim = dataSet.shape
     if dim != 2:
-        print("Sorry! I can not draw because the dimension of your data is not 2!")
+        print("\tSorry! I can not draw because the dimension of your data is not 2!")
         return 1
 
     mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '<r', 'pr']
     if k > len(mark):
-        print("Sorry! Your k is too large!")
+        print("\tSorry! Your k is too large!")
         return 1
 
     # 绘制所有非中心样本点
@@ -133,17 +133,16 @@ def showCluster(dataSet, k, centroids, clusterAssment):
 # step 1: 载入数据
 print("step 1: load data...")
 dataSet = []
-with open('./testSet.txt') as fileIn:
+with open('./wpbc.data.txt') as fileIn:
     for line in fileIn.readlines():
-        line = line.strip()
-        lineArr = line.split(",")
-        dataSet.append([float(lineArr[0]), float(lineArr[1])])
+        line = line.strip().split(",")
+        line = list(map(lambda x:float(x), line[2:]))
+        dataSet.append(line)
 
 # step 2: 开始聚合...
 print("step 2: clustering...")
 dataSet = np.mat(dataSet)
-print("dataSet: ", dataSet)
-k = 4
+k = 2
 centroids, clusterAssment = kMeans(dataSet, k)
 
 # step 3: 显示结果
